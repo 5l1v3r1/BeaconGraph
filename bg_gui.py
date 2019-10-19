@@ -1,6 +1,6 @@
-from PyQt5.QtCore import QThread, QUrl, pyqtSignal, Qt
+from PyQt5.QtCore import QThread, QUrl, pyqtSignal, Qt, QSequentialAnimationGroup, QPropertyAnimation, QEasingCurve
 from PyQt5.QtGui import QIcon, QPixmap
-from PyQt5.QtWidgets import QApplication, QBoxLayout, QDialog, QLineEdit, QLabel, QPushButton, QFormLayout, QErrorMessage
+from PyQt5.QtWidgets import QApplication, QBoxLayout, QDialog, QLineEdit, QLabel, QPushButton, QFormLayout, QMessageBox, QGraphicsOpacityEffect
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from neoHandler import neoHandler
 
@@ -32,6 +32,18 @@ qss = ("""
         QPushButton {
             color: white;
             background-color: rgb(5, 5, 36);
+        }
+        QMessageBox {
+            color: white;
+            background-color: rgb(5, 5, 36);
+            padding: 10px 20px 20px 20px;
+            font-size: 14px;
+        }
+        QWebEngineView {
+            color: white;
+            background-color: rgb(5, 5, 36);
+            padding: 10px 20px 20px 20px;
+            font-size: 14px;
         }
         """)
 
@@ -89,8 +101,10 @@ class Form(QDialog):
             self.LOGGEDIN = True
             self.close()
         except Exception as e:
-            err = QErrorMessage()
-            err.showMessage(str(e.__context__))
+            err = QMessageBox()
+            err.setStyleSheet(qss)
+            err.setText(str(e.__context__))
+            err.show()
 
 class BeaconView(QWebEngineView):
     def __init__(self, url, parent=None):
@@ -98,4 +112,37 @@ class BeaconView(QWebEngineView):
         self.setWindowIcon(QIcon("assets/logo.png"))
         self.setWindowTitle("BeaconGraph")
         self.setMinimumSize(1440,900)
+        self.setStyleSheet(qss)
         self.load(QUrl(url))
+
+    def showStatus(self, text):
+        pass
+        #self.statusWid = StatusNotification(text, self)
+    
+class StatusNotification(QLabel):
+    def __init__(self, text, upper, parent=None):
+        super(StatusNotification, self).__init__(parent)
+        self.setText("test")
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.Dialog)
+        self.setStyleSheet("""
+            color: white;
+            background-color: rgb(5, 5, 36);
+            padding: 2px;
+            font-size: 14px;
+        """)
+        self.setGeometry((upper.width()-100)/2, 0, 100, 20) 
+        self.setAttribute(Qt.WA_TransparentForMouseEvents)
+        effect = QGraphicsOpacityEffect()
+        effect.setOpacity(1)
+        self.setGraphicsEffect(effect)
+        
+        self.animations = QSequentialAnimationGroup(self)
+        self.animations.addPause(3000)
+        opacAnimation = QPropertyAnimation(effect, b"opacity", self.animations)
+        opacAnimation.setDuration(2000)
+        opacAnimation.setStartValue(1.0)
+        opacAnimation.setEndValue(0.0)
+        opacAnimation.setEasingCurve(QEasingCurve.OutQuad)
+        self.animations.addAnimation(opacAnimation)
+        self.animations.start()
+        self.show()

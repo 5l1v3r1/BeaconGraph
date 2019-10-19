@@ -17,121 +17,144 @@ from PyQt5.QtWebEngineWidgets import QWebEngineView
 from bg_gui import Form, BeaconView
 
 class BeaconGraph():
-    def __init__(self, neo, parent=None):
+    def __init__(self, neo=None, parent=None, dev=False):
         self.app = dash.Dash("BeaconGraph")
         self.app.title = "BeaconGraph"
+        self.app.css.config.serve_locally = True
+        self.app.scripts.config.serve_locally = True
+        
+        if dev:
+            from neoHandler import neoHandler
+            neo = neoHandler("bolt://localhost:7687", "neo4j", "beacon")
+
         elements = neo.initialQuery()
 
         self.app.layout = html.Div(className="container", children=[
-            html.Div(className="pageDiv", children=[
-            cyto.Cytoscape(
-                id='cytoscape',
-                layout={'name': 'cose',
-                        'weaver': True,
-                        'componentSpacing': 130,
-                        'nodeRepulsion' : 150000,
-                        'nodeOverlap' : 200,
-                        'idealEdgeLength': 100,
-                        'nodeDimensionsIncludeLabels': True,
-                        'padding': 200,
-                        'fit': True},
-                style={'width': '100%', 'height': "100%"},
-                elements={},
-                stylesheet=[
-                    {
-                        'selector': 'node',
-                        'style': {
-                            'content': 'data(name)',
-                            'color': 'white',
-                            'font-family': 'Fira Mono',
-                            'font-size': 12,
-                            'text-valign': 'bottom',
-                            'text-halign': 'center',
-                            'background-fit': 'contain',
-                            'background-clip': 'none',
-                            'text-background-color': '#00001a',
-                            'text-background-opacity': 0.7,
-                            'text-background-padding': 2,
-                            'text-background-shape': 'roundrectangle',
-                            'min-zoomed-font-size': 8 
+            dcc.Upload(id='dragdrop-data', disable_click=True, multiple=True, style_active={}, children=[
+                html.Div(className="pageDiv", children=[   
+                cyto.Cytoscape(
+                    id='cytoscape',
+                    layout={'name': 'cose',
+                            'weaver': True,
+                            'componentSpacing': 130,
+                            'nodeRepulsion' : 150000,
+                            'nodeOverlap' : 200,
+                            'idealEdgeLength': 100,
+                            'nodeDimensionsIncludeLabels': True,
+                            'padding': 200,
+                            'fit': True},
+                    style={'width': '100%', 'height': "100%"},
+                    elements={},
+                    stylesheet=[
+                        {
+                            'selector': 'node',
+                            'style': {
+                                'content': 'data(name)',
+                                'color': 'white',
+                                'font-family': 'Fira Mono',
+                                'font-size': 12,
+                                'text-valign': 'bottom',
+                                'text-halign': 'center',
+                                'background-fit': 'contain',
+                                'background-clip': 'none',
+                                'text-background-color': '#00001a',
+                                'text-background-opacity': 0.7,
+                                'text-background-padding': 2,
+                                'text-background-shape': 'roundrectangle',
+                                'min-zoomed-font-size': 8 
+                            }
+                        }, 
+                        {
+                            'selector': 'edge',
+                            'style': {
+                                'width': '2px',
+                                'target-arrow-shape': 'triangle-backcurve',
+                                'target-arrow-color': 'white',
+                                'target-arrow-fill': 'hollow',
+                                'control-point-step-size': '140px',
+                                'label': 'data(name)',
+                                'color': 'white',
+                                'font-size': '10',
+                                'curve-style': 'bezier',
+                                'text-rotation': 'autorotate',
+                                'text-valign': 'top',
+                                'text-margin-y': -10,
+                                'text-background-color': '#00001a',
+                                'min-zoomed-font-size': 8  
+                            }
+                        },
+                        {
+                            'selector': 'core',
+                            'style': {
+                                'active-bg-color': 'blue'          
+                            }
+                        },
+                        {
+                            'selector': 'node:selected',
+                            'style': {
+                                'border-color': 'red',
+                                'border-width': '3px',
+                                'border-style': 'solid'          
+                            }
+                        },
+                        {
+                            'selector': 'node[type = "Client"]',
+                            'style': {
+                                'background-color': neo.CLIENT_COLOR          
+                            }
+                        },
+                        {
+                            'selector': 'node[type = "Open"]',
+                            'style': {
+                                'background-color': neo.OPEN_COLOR          
+                            }
+                        },
+                        {
+                            'selector': 'node[type = "WEP"]',
+                            'style': {
+                                'background-color': neo.WEP_COLOR,           
+                            }
+                        },
+                        {
+                            'selector': 'node[type = "WPA"]',
+                            'style': {
+                                'background-color': neo.WPA_COLOR          
+                            }
+                        },
+                        {
+                            'selector': 'node[type = "WPA2"]',
+                            'style': {
+                                'background-color': neo.WPA2_COLOR          
+                            }
+                        },
+                        {
+                            'selector': 'node[type = "WPA3"]',
+                            'style': {
+                                'background-color': neo.WPA3_COLOR          
+                            }
+                        },
+                        {
+                            'selector': 'node[type = "AP"]',
+                            'style': {
+                                'background-color': neo.AP_COLOR          
+                            }
+                        },
+                        {
+                            'selector': 'edge[name = "Probes"]',
+                            'style': {
+                                'line-color': neo.PROBE_COLOR, 
+                                'line-style': 'dashed'         
+                            }
+                        },
+                        {
+                            'selector': 'edge[name = "AssociatedTo"]',
+                            'style': {
+                                'line-color': neo.ASSOC_COLOR, 
+                                'width': 6         
+                            }
                         }
-                    }, 
-                    {
-                        'selector': 'edge',
-                        'style': {
-                            'width': '2px',
-                            'target-arrow-shape': 'triangle-backcurve',
-                            'target-arrow-color': 'white',
-                            'target-arrow-fill': 'hollow',
-                            'control-point-step-size': '140px',
-                            'label': 'data(name)',
-                            'color': 'white',
-                            'font-size': '10',
-                            'curve-style': 'bezier',
-                            'text-rotation': 'autorotate',
-                            'text-valign': 'top',
-                            'text-margin-y': -10,
-                            'text-background-color': '#00001a',
-                            'min-zoomed-font-size': 8  
-                        }
-                    },
-                    {
-                        'selector': 'core',
-                        'style': {
-                            'active-bg-color': 'blue'          
-                        }
-                    },
-                    {
-                        'selector': 'node[type = "Client"]',
-                        'style': {
-                            'background-color': neo.CLIENT_COLOR          
-                        }
-                    },
-                    {
-                        'selector': 'node[type = "Open"]',
-                        'style': {
-                            'background-color': neo.OPEN_COLOR          
-                        }
-                    },
-                    {
-                        'selector': 'node[type = "WEP"]',
-                        'style': {
-                            'background-color': neo.WEP_COLOR,           
-                        }
-                    },
-                    {
-                        'selector': 'node[type = "WPA"]',
-                        'style': {
-                            'background-color': neo.WPA_COLOR          
-                        }
-                    },
-                    {
-                        'selector': 'node[type = "WPA2"]',
-                        'style': {
-                            'background-color': neo.WPA2_COLOR          
-                        }
-                    },
-                    {
-                        'selector': 'node[type = "AP"]',
-                        'style': {
-                            'background-color': neo.AP_COLOR          
-                        }
-                    },
-                    {
-                        'selector': 'edge[name = "Probes"]',
-                        'style': {
-                            'line-color': neo.PROBE_COLOR, 
-                            'line-style': 'dashed'         
-                        }
-                    },
-                    {
-                        'selector': 'edge[name = "AssociatedTo"]',
-                        'style': {
-                            'line-color': neo.ASSOC_COLOR, 
-                            'width': 6         
-                        }
-                    }
-                ]
+                    ]
+                )]
             )]),
 
             #Legend - bottom left
@@ -147,7 +170,7 @@ class BeaconGraph():
                     dcc.Tab(label="Database", value='db-info', className='custom-tab', children=[
                         html.Div(id='db-content-div', children=[
                             html.Pre(id='db-content', className="dbinfocontent"),
-                            dcc.ConfirmDialogProvider(id='deletedb-provider', message='Are you sure you want to delete the DB?', children=[
+                            dcc.ConfirmDialogProvider(id='deletedb-provider', message='Are you sure you want to delete the database?', children=[
                                 html.Button('Delete DB', className="bgbutton")   
                         ]),
                             html.Div(id="hiddendb-div")
@@ -242,10 +265,12 @@ class BeaconGraph():
         @self.app.callback(Output('filtervalue-dropdown', 'options'), [Input('cytoscape', 'elements'), 
                     Input('filtername-dropdown', 'value'), Input('hidden-upload-div', 'children'), Input('hiddendb-div', 'children')])
         def updateSearchNames(eles, searchName, uploadEntry, hiddenDB):
+            doNotShow = ["Device"]
+            
             searchOpts = {'name': neo.getNames, 'bssid': neo.getBssids, 'oui': neo.getOUIs, 'type': neo.getTypes, 
                             'auth': neo.getAuths, 'cipher': neo.getCiphers, 'channel': neo.getChannels, 'speed': neo.getSpeeds, 'lan': neo.getLanIPs}
             
-            return [{'label': opt, 'value': opt} for opt in searchOpts[searchName]()]
+            return [{'label': opt, 'value': opt} for opt in searchOpts[searchName]() if opt not in doNotShow]
 
         @self.app.callback(Output('db-content', 'children'), [Input('cytoscape', 'elements'), 
                             Input('hidden-upload-div', 'children'), Input('hiddendb-div', 'children')])
@@ -256,6 +281,7 @@ class BeaconGraph():
                 makeTableRow("DB User", neo.user or "-"),
                 makeTableRow("Clients", stats['Client'] or "0"),
                 makeTableRow("Probed APs", stats['AP'] or "0"),
+                makeTableRow("WPA3", stats['WPA3'] or "0"),
                 makeTableRow("WPA2", stats['WPA2'] or "0"),
                 makeTableRow("WPA", stats['WPA'] or "0"),
                 makeTableRow("WEP", stats['WEP'] or "0"),
@@ -274,6 +300,11 @@ class BeaconGraph():
                 eleCounter = {}
 
             return html.Table(id='data-table', children=[
+                html.Tr(className="tablerows", children=[
+                        html.Td(className="legendindicator", children=[daq.Indicator(id='WPA3-led', value="True", color=neo.WPA3_COLOR)]),
+                        html.Td(className="legendvalue", children="WPA3"),
+                        html.Td(className="legendvalue", children=eleCounter.get('WPA3') or "-")
+                ]),
                     html.Tr(className="tablerows", children=[
                         html.Td(className="legendindicator", children=[daq.Indicator(id='WPA2-led', value="True", color=neo.WPA2_COLOR)]),
                         html.Td(className="legendvalue", children="WPA2"),
@@ -306,11 +337,12 @@ class BeaconGraph():
                 ]),
             ])
 
-        @self.app.callback(Output('hidden-upload-div', 'children'), [Input('upload-data', 'contents')])
-        def handleUpload(contentList):
-            if contentList is not None:
-                for content in contentList:
-                    dType, *data = bg_parsers.parseUpload(content)
+        @self.app.callback(Output('hidden-upload-div', 'children'), [Input('upload-data', 'contents'), Input('dragdrop-data', 'contents')])
+        def handleUpload(contentList, dragContentList):
+            uploadList = contentList if contentList is not None else dragContentList
+            if uploadList is not None:
+                for upload in uploadList:
+                    dType, *data = bg_parsers.parseUpload(upload)
                     neo.handleIncomingData(dType, data)
                     
             return ""
@@ -320,10 +352,11 @@ class BeaconGraph():
             if not sub_clicks:
                 return ""
             neo.deleteDB()
+
             return ""
 
 if __name__ == '__main__':
-    qt_app  = QApplication(sys.argv)
+    """qt_app  = QApplication(sys.argv)
     form = Form()
     form.show()
     qt_app.exec_()
@@ -333,12 +366,18 @@ if __name__ == '__main__':
 
     if form.LOGGEDIN:
         bg = BeaconGraph(form.neo)
-        thread = threading.Thread(target=bg.app.run_server, kwargs={'host':'0.0.0.0', 'port': 9001, 'debug': False, 'threaded': True})
+        thread = threading.Thread(target=bg.app.run_server, kwargs={'host':'0.0.0.0', 'port': 9001, 'debug': True, 'threaded': True})
         thread.daemon = True
         thread.start()
 
         sleep(1)
         view = BeaconView('http://localhost:9001')
         view.show()
-        qt_app.exec_()
-    #app.run_server(host='0.0.0.0', debug=True, threaded=True)
+        qt_app.exec_()"""
+    bg = BeaconGraph(dev=True)
+    while True:
+        try:
+            bg.app.run_server(host='0.0.0.0', port=9001, debug=False)
+        except KeyboardInterrupt:
+            bg = BeaconGraph(dev=True)
+            bg.app.run_server(host='0.0.0.0', port=9001, debug=False)

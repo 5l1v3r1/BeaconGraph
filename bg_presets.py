@@ -16,8 +16,9 @@ CONSTRAINT_QUERIES=[
         '''CREATE CONSTRAINT ON (n:WEP) ASSERT n.bssid IS UNIQUE''',
         '''CREATE CONSTRAINT ON (n:Open) ASSERT n.bssid IS UNIQUE''',
         '''CREATE CONSTRAINT ON (n:AP) ASSERT n.name IS UNIQUE''',
-        '''CREATE CONSTRAINT ON (n:Device) ASSERT n.bssid IS UNIQUE'''
+        '''CREATE CONSTRAINT ON (n:Device) ASSERT n.bssid IS UNIQUE'''        
         ]
+
 ALL = (r'''MATCH (a)-[r]->(b)
         WITH
         {
@@ -87,7 +88,7 @@ INITIAL = (r'''MATCH p=(a)-[r]->(b)
                 lan: b.lan
             }
             AS aps
-            RETURN {nodes: collect(distinct clients) + collect(distinct aps), edges: collect(distinct edges)} LIMIT 100
+            RETURN {nodes: collect(distinct clients)[..1] + collect(distinct aps)[..1], edges: collect(distinct edges)[..1]}
             ''')
 
 def searchRelations(value, prop):
@@ -134,7 +135,7 @@ def searchNoRelations(value, prop):
                 id: id(b),
                 name: b.name,
                 type: labels(b),
-                oui: b.OUI,
+                oui: b.oui,
                 bssid: b.bssid,
                 channel: toString(b.channel),
                 speed: toString(b.speed),
@@ -146,7 +147,7 @@ def searchNoRelations(value, prop):
             RETURN {{nodes: collect(distinct aps) }}''')
 
 def searchLabelRelations(value):
-    return (f'''MATCH (a)-[r]->(b:{value})
+    return (f'''MATCH (a)-[r]->(b) WHERE "{value}" in labels(a) OR "{value}" in labels(b)
             WITH
             {{
                 id: toString(id(a)) + toString(id(b)),
@@ -189,7 +190,7 @@ def searchLabelNoRelations(value):
                 id: id(b),
                 name: b.name,
                 type: labels(b),
-                oui: b.OUI,
+                oui: b.oui,
                 bssid: b.bssid,
                 channel: toString(b.channel),
                 speed: toString(b.speed),

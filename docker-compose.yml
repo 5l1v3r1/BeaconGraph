@@ -1,0 +1,21 @@
+version: '3'
+
+networks:
+  neo4j-network:
+    driver: "bridge"
+
+services:
+  neo4j:
+    image: "neo4j:latest"
+    networks:
+      - neo4j-network
+    environment:
+      NEO4J_AUTH: "neo4j/beacon"
+  beacongraph:
+    build: .
+    depends_on:
+      - neo4j
+    ports:
+      - "8080:8080"
+    networks:
+      - "neo4j-network"

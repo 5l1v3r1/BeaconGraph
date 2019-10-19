@@ -16,6 +16,7 @@ class neoHandler:
         self.DB_URI = config['neo4j']['uri']
         self.DB_USER = config['neo4j']['User']
         self.DB_PASS = config['neo4j']['Password']
+        self.WPA3_COLOR = config['legend']['WPA3']
         self.WPA2_COLOR = config['legend']['WPA2']
         self.WPA_COLOR = config['legend']['WPA']
         self.WEP_COLOR = config['legend']['WEP']
@@ -92,7 +93,7 @@ class neoHandler:
         returnJson['edges'] = []
 
         for idx, node in enumerate(relationJSON['nodes']):
-            node['type'] = node['type'][0]
+            node['type'] = node['type'][0] if node['type'][0] != "Device" else node['type'][1]
 
             #Merge nodes that are both APs and Clients (mesh)
             if node['id'] not in checkDupes.values():
@@ -107,7 +108,7 @@ class neoHandler:
                 returnJson['nodes'][inDupe]['data'] = node
         
         for idx, edge in enumerate(relationJSON['edges']):
-            returnJson['edges'].append({"data": edge, "selected": 'false', "group": "edges"})
+            returnJson['edges'].append({"data": edge, "selected": False, "group": "edges"})
 
         return returnJson
 
@@ -159,19 +160,24 @@ class neoHandler:
                 self.graph.push(sNode)
                 sNode = self.graph.nodes.match("Device", bssid=s['bssid']).first()
 
-            for essid in essids: 
-                nExisting = self.graph.nodes.match("Device", name=essid).first()
-                if len(essid) > 0:
-                    newProbe = Node("AP", name=essid)
-                    newProbe.add_label("Device")
-                    self.graph.create(Relationship(sNode, "Probes", nExisting or newProbe))
-            
             if s['assoc'] is not None:
                 aExisting = self.graph.nodes.match("Device", bssid=s['assoc']).first()
                 newAssoc = Node("AP", bssid=s['assoc'])
                 newAssoc.add_label("Device")
                 self.graph.create(Relationship(sNode, "AssociatedTo", aExisting or newAssoc))
-        
+
+            for essid in essids: 
+                nExisting = self.graph.nodes.match("Device", name=essid).first()
+                if len(essid) > 0:
+                    try:
+                        aAssoc = self.graph.relationships.match((sNode, ), "AssociatedTo", name=essid).first()
+                    except ValueError as e:
+                        newProbe = Node("AP", name=essid)
+                        newProbe.add_label("Device")
+                        self.graph.create(Relationship(sNode, "Probes", nExisting or newProbe))
+            
+            
+
         print("Database updated!")
 
     def deleteDB(self):

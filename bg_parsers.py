@@ -2,9 +2,7 @@ import base64
 import io
 import json
 import pandas as pd
-import logging
 
-logging.basicConfig(format='%(asctime)s - %(message)s')
 macFrame = pd.DataFrame([json.loads(line) for line in open("macaddress.io-db.json").readlines()])
 
 def parseUpload(content):
@@ -93,7 +91,9 @@ def __makeAirodumpNodes(bDict, sDict):
         
         oui = macLookup(bssid)
         
-        if "WPA2" in priv:
+        if "WPA3" in priv:
+            bNode = {'type': "WPA3", 'name': essid, 'bssid':bssid, 'oui':oui, 'encryption':"WPA3", 'speed':speed, 'channel':channel, 'auth':auth, 'cipher':cipher, 'lan':lan}
+        elif "WPA2" in priv:
             bNode = {'type': "WPA2", 'name': essid, 'bssid':bssid, 'oui':oui, 'encryption':"WPA2", 'speed':speed, 'channel':channel, 'auth':auth, 'cipher':cipher, 'lan':lan}
         elif "WPA" in priv:
             bNode = {'type': "WPA", 'name':essid, 'bssid':bssid, 'oui':oui, 'encryption':"WPA", 'speed':speed, 'channel':channel, 'auth':auth, 'cipher':cipher, 'lan':lan}
