@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 import dash
 import json
-import asyncio
 import sys
 import threading
 import dash_daq as daq
 import dash_html_components as html
 import dash_cytoscape as cyto
 import dash_core_components as dcc
+import dash_bootstrap_components as dbc
 import bg_parsers
 from collections import Counter
 from time import sleep
@@ -171,7 +171,10 @@ class BeaconGraph():
                         html.Div(id='db-content-div', children=[
                             html.Pre(id='db-content', className="dbinfocontent"),
                             dcc.ConfirmDialogProvider(id='deletedb-provider', message='Are you sure you want to delete the database?', children=[
-                                html.Button('Delete DB', className="bgbutton")   
+                                html.Button('Delete DB', className="dangerbutton")   
+                        ]),
+                        dcc.ConfirmDialogProvider(id='updatemac-provider', message='Are you sure you want to update the MAC address file?', children=[
+                                html.Button('Update MAC File', className="warningbutton"),
                         ]),
                             html.Div(id="hiddendb-div")
                     ])]),
@@ -355,6 +358,14 @@ class BeaconGraph():
 
             return ""
 
+        @self.app.callback(Output('hiddendb-div', 'children'), [Input('updatemac-provider', 'submit_n_clicks')])
+        def updateMacFile(sub_clicks):
+            if not sub_clicks:
+                return ""
+            neo.deleteDB()
+
+            return ""
+            
 if __name__ == '__main__':
     """qt_app  = QApplication(sys.argv)
     form = Form()
@@ -375,9 +386,4 @@ if __name__ == '__main__':
         view.show()
         qt_app.exec_()"""
     bg = BeaconGraph(dev=True)
-    while True:
-        try:
-            bg.app.run_server(host='0.0.0.0', port=9001, debug=False)
-        except KeyboardInterrupt:
-            bg = BeaconGraph(dev=True)
-            bg.app.run_server(host='0.0.0.0', port=9001, debug=False)
+    bg.app.run_server(host='0.0.0.0', port=9001, debug=False)

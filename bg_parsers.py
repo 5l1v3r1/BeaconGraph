@@ -2,8 +2,23 @@ import base64
 import io
 import json
 import pandas as pd
+import requests
 
 macFrame = pd.DataFrame([json.loads(line) for line in open("macaddress.io-db.json").readlines()])
+
+def refreshMACs():
+    global macFrame
+
+    try:
+        resp = requests.get("https://macaddress.io/database/macaddress.io-db.json")
+    except requests.RequestException as e:
+        return e
+
+    with open("macaddress.io-db.json", "w") as macFile:
+        macFile.write(resp.text)
+        
+    macFrame = pd.DataFrame([json.loads(line) for line in open("macaddress.io-db.json").readlines()])
+
 
 def parseUpload(content):
     content_type, content_string = content.split(',')
