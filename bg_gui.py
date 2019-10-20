@@ -1,7 +1,12 @@
-from PyQt5.QtCore import QThread, QUrl, pyqtSignal, Qt, QSequentialAnimationGroup, QPropertyAnimation, QEasingCurve
+from PyQt5.QtCore import (QEasingCurve, QPropertyAnimation,
+                          QSequentialAnimationGroup, Qt, QThread, QUrl,
+                          pyqtSignal)
 from PyQt5.QtGui import QIcon, QPixmap
-from PyQt5.QtWidgets import QApplication, QBoxLayout, QDialog, QLineEdit, QLabel, QPushButton, QFormLayout, QMessageBox, QGraphicsOpacityEffect
 from PyQt5.QtWebEngineWidgets import QWebEngineView
+from PyQt5.QtWidgets import (QApplication, QBoxLayout, QDialog, QFormLayout,
+                             QGraphicsOpacityEffect, QLabel, QLineEdit,
+                             QMessageBox, QPushButton)
+
 from neoHandler import neoHandler
 
 qss = ("""
@@ -50,7 +55,7 @@ qss = ("""
 
 class Form(QDialog):
     def __init__(self, parent=None):
-        super(Form,self).__init__(parent)
+        super(Form, self).__init__(parent)
         self.LOGGEDIN = False
         self.setWindowIcon(QIcon("assets/logo.png"))
         self.setWindowTitle("BeaconGraph")
@@ -83,11 +88,11 @@ class Form(QDialog):
         logoLayout.addWidget(self.picLabel)
 
         layout = QFormLayout()
-        layout.addRow(self.QUriLabel,self.uri)
-        layout.addRow(self.QUserLabel,self.username)
-        layout.addRow(self.QPasswordLabel,self.password)
+        layout.addRow(self.QUriLabel, self.uri)
+        layout.addRow(self.QUserLabel, self.username)
+        layout.addRow(self.QPasswordLabel, self.password)
         layout.addRow(self.btn_Submit)
-        
+
         logoLayout.addLayout(layout)
         self.setLayout(logoLayout)
         self.btn_Submit.clicked.connect(self.Submit_btn)
@@ -106,19 +111,21 @@ class Form(QDialog):
             err.setText(str(e.__context__))
             err.show()
 
+
 class BeaconView(QWebEngineView):
     def __init__(self, url, parent=None):
         super(BeaconView, self).__init__(parent)
         self.setWindowIcon(QIcon("assets/logo.png"))
         self.setWindowTitle("BeaconGraph")
-        self.setMinimumSize(1440,900)
+        self.setMinimumSize(1440, 900)
         self.setStyleSheet(qss)
         self.load(QUrl(url))
 
     def showStatus(self, text):
         pass
         #self.statusWid = StatusNotification(text, self)
-    
+
+
 class StatusNotification(QLabel):
     def __init__(self, text, upper, parent=None):
         super(StatusNotification, self).__init__(parent)
@@ -130,12 +137,12 @@ class StatusNotification(QLabel):
             padding: 2px;
             font-size: 14px;
         """)
-        self.setGeometry((upper.width()-100)/2, 0, 100, 20) 
+        self.setGeometry((upper.width()-100)/2, 0, 100, 20)
         self.setAttribute(Qt.WA_TransparentForMouseEvents)
         effect = QGraphicsOpacityEffect()
         effect.setOpacity(1)
         self.setGraphicsEffect(effect)
-        
+
         self.animations = QSequentialAnimationGroup(self)
         self.animations.addPause(3000)
         opacAnimation = QPropertyAnimation(effect, b"opacity", self.animations)

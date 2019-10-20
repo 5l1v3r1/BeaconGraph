@@ -1,23 +1,28 @@
 import base64
 import io
 import json
+
 import pandas as pd
 import requests
 
-macFrame = pd.DataFrame([json.loads(line) for line in open("macaddress.io-db.json").readlines()])
+macFrame = pd.DataFrame([json.loads(line)
+                         for line in open("macaddress.io-db.json").readlines()])
+
 
 def refreshMACs():
     global macFrame
 
     try:
-        resp = requests.get("https://macaddress.io/database/macaddress.io-db.json")
+        resp = requests.get(
+            "https://macaddress.io/database/macaddress.io-db.json")
     except requests.RequestException as e:
         return e
 
     with open("macaddress.io-db.json", "w") as macFile:
         macFile.write(resp.text)
-        
-    macFrame = pd.DataFrame([json.loads(line) for line in open("macaddress.io-db.json").readlines()])
+
+    macFrame = pd.DataFrame([json.loads(line)
+                             for line in open("macaddress.io-db.json").readlines()])
 
 
 def parseUpload(content):
@@ -27,8 +32,9 @@ def parseUpload(content):
         print("Airodump received!")
         bDict, sDict = __parseAirodump(decoded)
         return "Airodump", __makeAirodumpNodes(bDict, sDict)
-    
+
     return ""
+
 
 def macLookup(bssid):
     for x in range(16, 7, -1):
@@ -40,6 +46,7 @@ def macLookup(bssid):
             return m['companyName'].values[0]
 
     return ""
+
 
 def __cleanup(data, station=False):
     # Airodump format is dirty. Clean up for proper parsing.
@@ -63,6 +70,7 @@ def __cleanup(data, station=False):
 
     return "\n".join(cleanList)
 
+
 def __parseAirodump(decoded):
 
     bssidData, stationData, _ = decoded.split(b"\r\n\r\n")
@@ -84,6 +92,7 @@ def __parseAirodump(decoded):
     sDict = stationDF.to_dict(orient='records')
     return bDict, sDict
 
+
 def __makeAirodumpNodes(bDict, sDict):
     bssidNodes, stationNodes = [], []
 
@@ -101,27 +110,33 @@ def __makeAirodumpNodes(bDict, sDict):
         if lan == "0.0.0.0":
             lan = ""
 
-        if  len(essid) == 0:
+        if len(essid) == 0:
             essid = bssid
-        
+
         oui = macLookup(bssid)
-        
+
         if "WPA3" in priv:
-            bNode = {'type': "WPA3", 'name': essid, 'bssid':bssid, 'oui':oui, 'encryption':"WPA3", 'speed':speed, 'channel':channel, 'auth':auth, 'cipher':cipher, 'lan':lan}
+            bNode = {'type': "WPA3", 'name': essid, 'bssid': bssid, 'oui': oui, 'encryption': "WPA3",
+                     'speed': speed, 'channel': channel, 'auth': auth, 'cipher': cipher, 'lan': lan}
         elif "WPA2" in priv:
-            bNode = {'type': "WPA2", 'name': essid, 'bssid':bssid, 'oui':oui, 'encryption':"WPA2", 'speed':speed, 'channel':channel, 'auth':auth, 'cipher':cipher, 'lan':lan}
+            bNode = {'type': "WPA2", 'name': essid, 'bssid': bssid, 'oui': oui, 'encryption': "WPA2",
+                     'speed': speed, 'channel': channel, 'auth': auth, 'cipher': cipher, 'lan': lan}
         elif "WPA" in priv:
-            bNode = {'type': "WPA", 'name':essid, 'bssid':bssid, 'oui':oui, 'encryption':"WPA", 'speed':speed, 'channel':channel, 'auth':auth, 'cipher':cipher, 'lan':lan}
+            bNode = {'type': "WPA", 'name': essid, 'bssid': bssid, 'oui': oui, 'encryption': "WPA",
+                     'speed': speed, 'channel': channel, 'auth': auth, 'cipher': cipher, 'lan': lan}
         elif "WEP" in priv:
-            bNode = {'type':"WEP", 'name':essid, 'bssid':bssid, 'oui':oui, 'encryption':"WEP", 'speed':speed, 'channel':channel, 'auth':auth, 'cipher':cipher, 'lan':lan}
+            bNode = {'type': "WEP", 'name': essid, 'bssid': bssid, 'oui': oui, 'encryption': "WEP",
+                     'speed': speed, 'channel': channel, 'auth': auth, 'cipher': cipher, 'lan': lan}
         elif "OPN" in priv:
-            bNode = {'type': "Open", 'name':essid, 'bssid':bssid, 'oui':oui, 'encryption':"None", 'speed':speed, 'channel':channel, 'auth':auth, 'cipher':cipher, 'lan':lan}
+            bNode = {'type': "Open", 'name': essid, 'bssid': bssid, 'oui': oui, 'encryption': "None",
+                     'speed': speed, 'channel': channel, 'auth': auth, 'cipher': cipher, 'lan': lan}
         else:
-            bNode = {'type': "AP", 'name':essid, 'bssid':bssid, 'oui':oui, 'encryption':"None", 'speed':speed, 'channel':channel, 'auth':auth, 'cipher':cipher, 'lan':lan}
+            bNode = {'type': "AP", 'name': essid, 'bssid': bssid, 'oui': oui, 'encryption': "None",
+                     'speed': speed, 'channel': channel, 'auth': auth, 'cipher': cipher, 'lan': lan}
 
         bssidNodes.append(bNode)
 
-    #Parse list of clients and add probe relations
+    # Parse list of clients and add probe relations
     print("Making station nodes!")
     for entry in sDict:
         essids = entry['Probed ESSIDs'].split(",")
@@ -136,11 +151,13 @@ def __makeAirodumpNodes(bDict, sDict):
             bssid = None
 
         oui = macLookup(station)
-        sNode = {'type': "Client", 'name': station, 'bssid': station, 'fts': fts, 'lts': lts, 'pwr': pwr, 'pkts': pkts, 'assoc': bssid, 'oui': oui}
-        
+        sNode = {'type': "Client", 'name': station, 'bssid': station, 'fts': fts,
+                 'lts': lts, 'pwr': pwr, 'pkts': pkts, 'assoc': bssid, 'oui': oui}
+
         stationNodes.append([essids, sNode])
 
     return bssidNodes, stationNodes
+
 
 '''for essid in essids:
     if any(node["name"] == essid for node in bssidNodes):
