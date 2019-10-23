@@ -278,3 +278,8 @@ body{
     float: right;
     border-color:  rgb(5, 5, 36);
 }
+
+.statusdiv{
+    font-family: "Fira Mono";
+    text-align: center;
+}

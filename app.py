@@ -28,7 +28,7 @@ class BeaconGraph():
         self.app.css.config.serve_locally = True
         self.app.scripts.config.serve_locally = True
 
-        if dev and os.environ["BG_DOCKERENV"] == "1":
+        if dev and os.environ.get("BG_DOCKERENV") == "1":
             neo = neoHandler("bolt://neo4j:7687", "neo4j", "beacon")
         elif dev:
             neo = neoHandler("bolt://localhost:7687", "neo4j", "beacon")
@@ -249,6 +249,8 @@ class BeaconGraph():
                 # html.Span(className="tooltiptext", children="Export Data")])
             ]),
 
+            #Status - top middle
+            html.Div(id="hidden-status-div"),
             html.Div(id='hidden-upload-div')
         ])
 
@@ -399,10 +401,16 @@ class BeaconGraph():
         def updateMacFile(sub_clicks):
             if not sub_clicks:
                 return ""
-            neo.deleteDB()
+            bg_parsers.refreshMACs()
 
             return ""
 
+def setMACUpdateStatus(success):
+    if success:
+        color = "success"
+    else:
+        color = "fail"
+    return dbc.Alert("MAC database file updated!", id="macupdate-success", color=color, is_open=True, duration=4000)
 
 if __name__ == '__main__':
     """qt_app  = QApplication(sys.argv)
